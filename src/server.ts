@@ -30,6 +30,7 @@ const server = createServer((req, res) => {
 
       file.pipe(fs.createWriteStream(`/data/etsik/photos/${info.filename}`));
     });
+    return;
   }
 
   res.writeHead(404, {
