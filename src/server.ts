@@ -38,7 +38,7 @@ const server = createServer((req, res) => {
 
                         res.end(
                                 JSON.stringify({
-                                        error: "Not Found",
+                                        accepted: "true",
                                 }),
                         );
                 })
