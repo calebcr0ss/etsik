@@ -14,8 +14,12 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@types/node": "^26.4.1",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0"
   }
 }
