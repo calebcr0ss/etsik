@@ -15,8 +15,9 @@ const server = createServer((req, res) => {
     );
 
     return;
-  } else if (req.method === "GET" && req.url === "/api/photos") {
+  } else if (req.method === "POST" && req.url === "/api/photos") {
     const busboy = Busboy({ headers: req.headers });
+    req.pipe(busboy);
 
     busboy.on("field", (name, value) => {
       console.log(name, value); // get a string field
@@ -27,7 +28,7 @@ const server = createServer((req, res) => {
       console.log(info.filename); // "photo.jpg"
       console.log(info.mimeType); // "image/jpeg"
 
-      file.pipe(fs.createWriteStream("/data/etsik/photos/"));
+      file.pipe(fs.createWriteStream(`/data/etsik/photos/${info.filename}`));
     });
   }
 
