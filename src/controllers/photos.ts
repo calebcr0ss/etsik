@@ -14,7 +14,7 @@ function uploadPhoto(req: IncomingMessage, res: ServerResponse) {
                                 info.filename,
                                 info.mimeType,
                         );
-                        console.log(`dev ${info.encoding} dev ${name}`);
+
                         if (success === false) {
                                 files[info.filename] = success;
                         }
