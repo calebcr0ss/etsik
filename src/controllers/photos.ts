@@ -6,32 +6,45 @@ function uploadPhoto(req: IncomingMessage, res: ServerResponse) {
         try {
                 const busboy = Busboy({ headers: req.headers });
                 req.pipe(busboy);
-                let files: Record<string, boolean> = {};
+                const files: Record<string, boolean> = {};
+                const saves: Promise<void>[] = [];
 
-                busboy.on("file", async (name, file, info) => {
-                        let success: boolean = await savePhoto(
+                busboy.on("file", (name, file, info) => {
+                        const save = savePhoto(
                                 file,
                                 info.filename,
                                 info.mimeType,
+                        )
+
+                        saves.push(
+                                save.then(success => {
+                                        files[info.filename] = success;
+                                })
                         );
 
-                        if (success === false) {
-                                files[info.filename] = success;
-                        }
                 });
 
-                busboy.on("finish", () => {
-                        const toDelete = [];
-                        for (const [name, success] of Object.entries(files)) {
-                                if (success) toDelete.push(name);
+                busboy.on("finish", async () => {
+                        try {
+                                await Promise.all(saves);
+
+                                const faulty = Object.entries(files).filter(([_, success]) => !success).map(([name]) => name);
+
+                                res.writeHead(200, {
+                                        'Content-Type': 'application/json'
+                                });
+                                res.end(JSON.stringify({ message: "Upload successful", faulty }));
+
+                        } catch {
+                                res.writeHead(500, {
+                                        "Content-Type": "application/json",
+                                });
+
+                                res.end(JSON.stringify({
+                                        error: "Upload failed",
+                                }));
                         }
-                        for (const key of toDelete) {
-                                delete files[key];
-                        }
-                        res.writeHead(200, {
-                                'Content-Type': 'application/json'
-                        });
-                        res.end(JSON.stringify({ message: "Upload successful", faulty: Object.keys(files)}));
+
                 });
         } catch {
                 res.writeHead(500, {
