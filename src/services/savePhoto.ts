@@ -6,9 +6,8 @@ async function savePhoto(img: Readable, filename: string, mimeType: string) {
         const path = `/data/etsik/photos/${filename}`
         try {
                 await fsp.access(path);
-                console.log("File under that name exists");
-                
                 img.resume();
+                console.log("File under that name exists");
 
                 return false;   
         } catch {}

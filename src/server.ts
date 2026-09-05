@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import "dotenv/config";
 
-import { PhotosRouter } from "./routes/photos.js"
+import { PhotosRouter } from "./routes/POSTphotos.js"
 
 const server = createServer((req, res) => {
         if (PhotosRouter(req, res)) {
@@ -18,7 +18,6 @@ const server = createServer((req, res) => {
                 }),
         );
 });
-
 const PORT = Number(process.env.PORT) || 3000;
 
 server.listen(PORT, "0.0.0.0", () => {
