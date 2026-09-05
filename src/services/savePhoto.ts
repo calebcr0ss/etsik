@@ -8,9 +8,7 @@ async function savePhoto(img: Readable, filename: string, mimeType: string) {
                 await fsp.access(path);
                 console.log("File under that name exists");
                 
-                await new Promise<void>((resolve, reject) => {
-                        resolve();
-                }) 
+                img.resume();
 
                 return false;   
         } catch {}
