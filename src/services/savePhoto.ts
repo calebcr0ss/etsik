@@ -7,7 +7,12 @@ async function savePhoto(img: Readable, filename: string, mimeType: string) {
         try {
                 await fsp.access(path);
                 console.log("File under that name exists");
-                return false;    
+                
+                await new Promise<void>((resolve, reject) => {
+                        resolve();
+                }) 
+
+                return false;   
         } catch {}
         
         const stream = fs.createWriteStream(path)
