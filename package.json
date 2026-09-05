@@ -20,6 +20,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "busboy": "^1.6.0"
+    "busboy": "^1.6.0",
+    "dotenv": "^17.4.2"
   }
 }
