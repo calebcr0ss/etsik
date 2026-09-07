@@ -1,51 +1,74 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import fsp from "node:fs/promises";
+import fs from "node:fs"
+import { randomUUID } from "node:crypto";
 import Busboy from "busboy";
 import { savePhoto } from "../services/savePhoto.js";
 
-function uploadPhoto(req: IncomingMessage, res: ServerResponse) {
+
+async function uploadPhoto(req: IncomingMessage, res: ServerResponse) {
         try {
                 const busboy = Busboy({ headers: req.headers });
                 req.pipe(busboy);
-                const files: Record<string, boolean> = {};
-                const saves: Promise<void>[] = [];
+                const stagingID = randomUUID();
 
-                busboy.on("file", (name, file, info) => {
-                        const save = savePhoto(
-                                file,
-                                info.filename,
-                                info.mimeType,
-                        )
+                const stagingPath = `${process.env.STAGING_DIR}/${stagingID}`;
 
-                        saves.push(
-                                save.then(success => {
-                                        files[info.filename] = success;
-                                })
-                        );
+                await fsp.mkdir(stagingPath, { recursive: true });
 
+                const Promises: Promise<boolean>[] = [];
+                const Files: string[] = [];
+
+                busboy.on("file", async (fieldname, stream, info) => {
+                        Promises.push(savePhoto(fieldname, stream, info, stagingPath));
+                });
+
+                busboy.on("field", (fieldname, value) => {
+                        if (fieldname === "files" && Files.length !== 0) {
+                                const parsed = JSON.parse(value);
+
+                                if (!Array.isArray(parsed)) {
+                                        res.writeHead(400, {
+                                                'Content-Type': 'application/json'
+                                        });
+                                        res.end(JSON.stringify({ error: "Invalid request.", flag: { "update": true } }));
+                                        return false;
+                                }
+
+
+                                parsed.forEach((file: string) => {
+                                        Files.push(file);
+                                });
+                        }
                 });
 
                 busboy.on("finish", async () => {
-                        try {
-                                await Promise.all(saves);
+                        await Promise.all(Promises);
 
-                                const faulty = Object.entries(files).filter(([_, success]) => !success).map(([name]) => name);
-
-                                res.writeHead(200, {
+                        if (Files.length === 0) {
+                                res.writeHead(400, {
                                         'Content-Type': 'application/json'
                                 });
-                                res.end(JSON.stringify({ message: "Upload successful", faulty }));
-
-                        } catch {
-                                res.writeHead(500, {
-                                        "Content-Type": "application/json",
-                                });
-
-                                res.end(JSON.stringify({
-                                        error: "Upload failed",
-                                }));
+                                res.end(JSON.stringify({ error: "No files selected.", flag: { "update": true } }));
+                                return false;
                         }
 
+                        Files.forEach(async(file) => {
+                                try {
+                                        await fsp.access(`${stagingPath}/${file}:original.*`);
+                                        await fsp.access(`${stagingPath}/${file}:preview.*`);
+
+                                        return false;
+                                } catch {
+                                        
+                                }
+
+                                
+                        });
                 });
+
+
+
         } catch {
                 res.writeHead(500, {
                         'Content-Type': 'application/json'
